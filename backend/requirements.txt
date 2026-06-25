@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+anthropic
+markitdown[pdf]
+pydantic
+python-multipart
+python-dotenv
+httpx

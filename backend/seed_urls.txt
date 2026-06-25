@@ -1,0 +1,2 @@
+# One paper URL per line (arXiv PDF links work well). Blank lines and # comments ignored.
+# Jerome: paste your mechanistic-interpretability paper URLs here, then run: python seed.py
