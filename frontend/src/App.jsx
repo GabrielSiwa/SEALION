@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import ForceGraph2D from "react-force-graph-2d";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { api } from "./api";
 import "./App.css";
 
@@ -273,7 +275,13 @@ function RightChat({ refIds, byId, onToggleRef }) {
         )}
         {messages.map((m, i) => (
           <div key={i} className={"msg " + m.role}>
-            {m.text}
+            {m.role === "assistant" ? (
+              <div className="md">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown>
+              </div>
+            ) : (
+              m.text
+            )}
             {m.cites?.length > 0 && (
               <div className="cites">cited: {m.cites.join(" · ")}</div>
             )}
