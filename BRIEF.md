@@ -140,15 +140,28 @@ Two project-scoped skills live in `.agents/skills/`:
 ## Build Notes
 *(appended at Stage 02 gate)*
 
+> Built as **SEALION** on localhost: backend :8000 (FastAPI), frontend :5173 (Vite). All 5 Done-When criteria verified end-to-end on 2026-06-24.
+
 ### Happy path
-1.
-2.
-3.
+1. Backend boots, loads `papers.json` (5 mech-interp / world-model papers) into memory → `GET /papers` returns them relevance-sorted (97/95/92/88/25) → left pane renders the sorted library.
+2. Paste a URL / upload a PDF → `markitdown` → Claude `messages.parse(output_format=PaperAssessment)` returns a **Pydantic-validated** relevance score + overview → paper inserts at its sorted position (live-verified: Othello-GPT paper scored 95).
+3. `GET /graph` exposes nodes + AI-derived topical edges → new paper renders as a `react-force-graph-2d` node with ≥1 edge (live drop produced 3 edges).
+4. Click a node (or library row) → backend **proxies the PDF same-origin** (`GET /papers/{id}/pdf`, verified `application/pdf` 3.15MB) → opens in the middle pane, sidestepping arXiv iframe blocking.
+5. Tag papers `@ reference` → `POST /chat` stuffs those papers' markdown → Claude answers grounded, citing them (verified: cited the referenced paper's real findings, no hallucination).
 
 ### Key decisions made during build
-
+- **Localhost-only** this stage (no Vercel/Render) — removed the two-service prod-deploy + CORS failure mode; Day-0 gate passed hour one.
+- **Data = in-memory JSON seeded from a URL list.** `seed.py` ingests `seed_urls.txt` once → committed `papers.json`. Deterministic demo, zero runtime LLM latency on the seeded set. Live drops are **in-memory only** (`persist=False`) so every demo run starts clean.
+- **Pydantic at the AI boundary** via `client.messages.parse(output_format=PaperAssessment)` — relevance score, overview, and related-titles (→ edges) all validated before reaching the UI/graph.
+- **Graph lib:** `react-force-graph-2d` (force layout = the living-graph wow beat).
+- **Topic** hardcoded to "Mechanistic Interpretability" in `backend/config.py` (the library leans world-models/emergent-representations — one-line change + re-seed if reframing is wanted).
 
 ### What's mocked or fragile
+- **No vector DB / RAG** — chat grounding is `@`-selected context-stuffing (by design, MVP scope). Long papers are truncated to `MAX_PAPER_CHARS` (12K) at the AI boundary.
+- **`@`-referencing is click-to-tag chips**, not inline `@`-autocomplete in the textbox — reliable, but the inline interaction is the natural Emil-polish upgrade.
+- **Edges are backward-linking** (a new paper links to papers already in the store at ingest time); fine for the graph but not symmetric by construction.
+- **Annotation-awareness (stretch #5) not built** — core loop protected first, per the sequencing rule.
+- Animation is still baseline (`scale(0.97)` on press, relevance-bar reveal) — Emil polish + `review-animations` gate pending before freeze.
 
 
 ---
