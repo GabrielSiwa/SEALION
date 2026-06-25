@@ -70,7 +70,6 @@ export default function App() {
       <div className="topbar">
         <span className="wordmark">SEALION</span>
         <span className="topic-pill">{TOPIC}</span>
-        <span className="tagline">Cursor, but for research papers</span>
       </div>
 
       <div className="panes">

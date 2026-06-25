@@ -17,10 +17,15 @@ TOPIC = "Mechanistic Interpretability"
 # Claude model — the latest and most capable, per the project brief.
 MODEL = "claude-opus-4-8"
 
-# Cap on how much of a paper's converted markdown we send to Claude.
-# Papers are long; the head carries title/abstract/intro, which is enough
-# for relevance scoring and topical-edge derivation.
+# Cap on how much of a paper's converted markdown we send to Claude for
+# relevance scoring + edge derivation. The head carries title/abstract/intro,
+# which is enough for those.
 MAX_PAPER_CHARS = 12000
+
+# For grounded chat we send much more of an @-referenced paper so deep
+# questions (specific numbers, sections) can be answered. Opus has plenty of
+# context; this is per referenced paper.
+CHAT_PAPER_CHARS = 60000
 
 # Localhost dev origins allowed to call this API.
 CORS_ORIGINS = [

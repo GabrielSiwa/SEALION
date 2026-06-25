@@ -25,6 +25,7 @@ def ingest_paper(markdown: str, url: str | None = None,
     paper = Paper(
         id=store.new_id(),
         title=assessment.title,
+        authors=assessment.authors,
         url=url,
         relevance_score=assessment.relevance_score,
         overview=assessment.overview,

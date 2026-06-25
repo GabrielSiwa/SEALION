@@ -42,7 +42,7 @@ def _startup() -> None:
 
 def _to_out(p) -> PaperOut:
     return PaperOut(
-        id=p.id, title=p.title, url=p.url,
+        id=p.id, title=p.title, authors=p.authors, url=p.url,
         relevance_score=p.relevance_score, overview=p.overview, edges=p.edges,
     )
 
@@ -133,5 +133,8 @@ def chat(req: ChatRequest) -> ChatResponse:
         if p is not None:
             referenced.append((p.title, p.markdown))
             cited_ids.append(pid)
-    answer = answer_question(req.question, referenced)
+    # The assistant is always aware of the whole library (title + overview),
+    # so the user can ask about any paper by name/topic/author without tagging.
+    catalog = [(p.title, p.authors, p.overview) for p in store.all_sorted()]
+    answer = answer_question(req.question, referenced, catalog)
     return ChatResponse(answer=answer, cited_ids=cited_ids)

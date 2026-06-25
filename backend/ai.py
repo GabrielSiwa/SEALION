@@ -7,7 +7,7 @@ Two operations:
 
 import anthropic
 
-from config import MODEL, MAX_PAPER_CHARS, TOPIC
+from config import MODEL, MAX_PAPER_CHARS, CHAT_PAPER_CHARS, TOPIC
 from models import PaperAssessment
 
 # Lazily constructed so the server (and /health) start even before the key is
@@ -34,6 +34,8 @@ def assess_paper(markdown: str, existing_titles: list[str]) -> PaperAssessment:
         f"{markdown[:MAX_PAPER_CHARS]}\n\n"
         "Return:\n"
         "- title: the paper's actual title.\n"
+        "- authors: the author list as printed (e.g. 'Scholz et al.' or full "
+        "names); empty string if you can't tell.\n"
         f"- relevance_score: 0-100, how relevant the paper is to \"{TOPIC}\".\n"
         "- overview: 1-2 sentences, plain language.\n"
         "- related_titles: the titles from the existing-papers list above that "
@@ -50,29 +52,54 @@ def assess_paper(markdown: str, existing_titles: list[str]) -> PaperAssessment:
     return response.parsed_output
 
 
-def answer_question(question: str, referenced: list[tuple[str, str]]) -> str:
-    """Answer a question grounded in the @-referenced papers.
+def answer_question(
+    question: str,
+    referenced: list[tuple[str, str]],
+    catalog: list[tuple[str, str, str]],
+) -> str:
+    """Answer a question as a library-aware research assistant.
 
-    `referenced` is a list of (title, markdown) tuples. The answer must cite
-    the referenced papers' actual content — no hallucinated references.
+    `catalog` is (title, authors, overview) for every paper in the workspace —
+    so the assistant can resolve a paper by title, topic, or author even when
+    nothing is explicitly tagged. `referenced` is (title, markdown) for the
+    papers the user @-referenced — full text provided for deep, grounded answers.
     """
 
+    lines = []
+    for title, authors, overview in catalog:
+        head = f"- {title}"
+        if authors:
+            head += f" ({authors})"
+        lines.append(f"{head} — {overview}")
+    cat = "\n".join(lines) or "(the library is empty)"
+
+    system = (
+        f"You are the research assistant inside SEALION, a workspace on "
+        f"\"{TOPIC}\". Be genuinely helpful and conversational.\n\n"
+        f"The workspace library contains these papers "
+        f"(title (authors) — overview):\n{cat}\n\n"
+        "You can identify a paper the user mentions by its title, topic, or "
+        "authors, and tell them about it. Use the library above plus your own "
+        "knowledge to explain concepts, give background, and connect ideas.\n\n"
+        "Guidelines:\n"
+        "- Prioritize the workspace's papers. Name the paper(s) you draw on.\n"
+        "- For specific claims, numbers, or results, ground them in a paper's "
+        "provided full text (below) and don't invent figures that aren't "
+        "supported. General explanation and context from your own knowledge is "
+        "fine and encouraged.\n"
+        "- If the user asks about a paper whose full text isn't loaded, answer "
+        "from its overview and what you know, and mention they can tag it with "
+        "\"@ reference\" in the library for a deeper, fully-grounded answer."
+    )
+
     if referenced:
-        context = "\n\n".join(
-            f"=== PAPER: {title} ===\n{md[:MAX_PAPER_CHARS]}"
+        full = "\n\n".join(
+            f"=== FULL TEXT: {title} ===\n{md[:CHAT_PAPER_CHARS]}"
             for title, md in referenced
         )
-        system = (
-            f"You are a research assistant for a workspace on \"{TOPIC}\". "
-            "Answer ONLY from the papers provided below. Cite papers by their "
-            "title in your answer. If the papers do not contain the answer, say "
-            "so plainly — never invent citations or facts.\n\n" + context
-        )
-    else:
-        system = (
-            f"You are a research assistant for a workspace on \"{TOPIC}\". "
-            "The user asked a question without referencing any specific paper. "
-            "Answer from general knowledge and note that no paper was referenced."
+        system += (
+            "\n\nThe user has @-referenced the following paper(s); their full "
+            f"text is provided for grounded answers:\n\n{full}"
         )
 
     response = get_client().messages.create(

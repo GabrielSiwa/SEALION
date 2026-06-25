@@ -13,6 +13,11 @@ class PaperAssessment(BaseModel):
     """What Claude returns for one paper, validated before storage."""
 
     title: str = Field(description="The paper's title.")
+    authors: str = Field(
+        default="",
+        description="The author list as given (e.g. 'Scholz et al.' or the "
+        "full names). Empty string if not determinable.",
+    )
     relevance_score: int = Field(
         ge=0, le=100,
         description="How relevant this paper is to the workspace topic, 0-100.",
@@ -35,6 +40,7 @@ class Paper(BaseModel):
 
     id: str
     title: str
+    authors: str = ""
     url: str | None = None
     relevance_score: int
     overview: str
@@ -47,6 +53,7 @@ class PaperOut(BaseModel):
 
     id: str
     title: str
+    authors: str = ""
     url: str | None
     relevance_score: int
     overview: str
