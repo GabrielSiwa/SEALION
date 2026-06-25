@@ -81,7 +81,9 @@ def ingest_url(req: IngestUrlRequest) -> PaperOut:
         markdown = convert_url(req.url)
     except Exception as e:
         raise HTTPException(400, f"Could not fetch/convert URL: {e}")
-    paper = ingest_paper(markdown, url=req.url)
+    # Live drops stay in-memory only; the seed is the sole writer of papers.json,
+    # so every demo run starts from the same clean seeded workspace.
+    paper = ingest_paper(markdown, url=req.url, persist=False)
     return _to_out(paper)
 
 
@@ -92,7 +94,7 @@ async def upload(file: UploadFile = File(...)) -> PaperOut:
         markdown = convert_bytes(data, filename=file.filename or "upload.pdf")
     except Exception as e:
         raise HTTPException(400, f"Could not convert PDF: {e}")
-    paper = ingest_paper(markdown, url=None, pdf_bytes=data)
+    paper = ingest_paper(markdown, url=None, pdf_bytes=data, persist=False)
     return _to_out(paper)
 
 

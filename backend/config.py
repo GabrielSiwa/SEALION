@@ -4,9 +4,12 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-# Load backend/.env so ANTHROPIC_API_KEY is available before the Anthropic
-# client is constructed (config is imported before ai.py builds the client).
-load_dotenv(Path(__file__).parent / ".env")
+# Load backend/.env and backend/.env.local so ANTHROPIC_API_KEY is available
+# before the Anthropic client is constructed (config is imported before ai.py
+# builds the client). .env.local wins if both define a value.
+_here = Path(__file__).parent
+load_dotenv(_here / ".env")
+load_dotenv(_here / ".env.local", override=True)
 
 # The single research topic this workspace is scoped to (single-topic MVP).
 TOPIC = "Mechanistic Interpretability"
