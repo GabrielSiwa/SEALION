@@ -1,2 +1,7 @@
 # One paper URL per line (arXiv PDF links work well). Blank lines and # comments ignored.
-# Jerome: paste your mechanistic-interpretability paper URLs here, then run: python seed.py
+# Topic: Mechanistic Interpretability
+https://arxiv.org/pdf/2309.00941
+https://arxiv.org/pdf/2603.21546
+https://arxiv.org/pdf/2102.05599
+https://openreview.net/pdf?id=DzGe40glxs
+https://arxiv.org/pdf/2509.24559
